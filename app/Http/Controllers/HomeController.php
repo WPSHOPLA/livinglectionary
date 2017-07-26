@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Category;
 use App\City;
-use App\Curator;
 use App\Country;
+use App\Curator;
 use App\Footer;
 use App\Home;
 use App\Http\Models;
@@ -15,10 +15,9 @@ use App\Products;
 use App\Register;
 use App\SecurityQuestion;
 use App\Settings;
+use App\Tax;
 use App\Theme;
 use App\Userlogin;
-use App\Tax;
-
 use DB;
 use File;
 use Illuminate\Support\Facades\Input;
@@ -225,17 +224,14 @@ class HomeController extends Controller
         //$theme = Theme::where('theme_name', $theme_name)->get()->first();
         $theme = null;
         $themes = Theme::all();
-        foreach($themes as $find_theme)
-        {
-            if($theme_name == strtolower($find_theme->theme_name))
-            {
+        foreach ($themes as $find_theme) {
+            if ($theme_name == strtolower($find_theme->theme_name)) {
                 $theme = $find_theme;
                 break;
             }
         }
 
-        if(!$theme)
-        {
+        if (!$theme) {
             return Redirect::to('home')->withErrors('Such Affirmation Does not exist');
         }
 
@@ -710,6 +706,7 @@ class HomeController extends Controller
 
         //pro_mr_id
         $product_contributor = Input::get('product_contributor');
+
         //pro_mc_id
         $product_category = Input::get('product_category');
         //$product_main_category = Input::get('product_main_category');
@@ -731,17 +728,24 @@ class HomeController extends Controller
         $search_store_products = Home::get_store_product_count($search_stores);
 
         $store_array = [];
-        foreach($search_stores as $search_store)
-        {
+        foreach ($search_stores as $search_store) {
             $store_array[$search_store->stor_id] = $search_store;
         }
 
         $search_active_stores = [];
-        foreach($search_store_products as $store_id=>$product_count)
-        {
-            if($product_count > 0)
-            {
+        foreach ($search_store_products as $store_id => $product_count) {
+            if ($product_count > 0) {
                 $search_active_stores[$store_id] = $store_array[$store_id];
+            }
+        }
+
+        //products with searched store
+        $find_store_products = [];
+        if (count($search_active_stores) > 0) {
+            foreach ($search_active_stores as $store) {
+                $store_id = $store->stor_id;
+                $p1 = Home::get_store_product_by_id($store_id);
+                $find_store_products = array_merge($find_store_products, $p1);
             }
         }
 
@@ -754,8 +758,10 @@ class HomeController extends Controller
 //            $search_contributors = array_merge($search_contributors, $search_contributors2);
 //        }
 
+        //var_dump($search_products_bget);
         //3. search products with that name
         $search_products_bget = Home::get_product_list_search($keyword);
+
 
         // Filter by Category
         if ($product_category != 0) {
@@ -777,6 +783,7 @@ class HomeController extends Controller
         // Filter by Contributor
         if ($product_contributor) {
             $product_contributor_ids = Home::get_merchant_ids_by_name($product_contributor);
+
             if (count($product_contributor_ids) > 0) {
                 $pids = [];
                 foreach ($product_contributor_ids as $product_contributor_id) {
@@ -784,12 +791,25 @@ class HomeController extends Controller
                 }
 
                 $search_products_bget = $search_products_bget->whereIn('pro_mr_id', $pids);
+                $search_products = $search_products_bget->get();
+            } else {
+
+                $search_products = $search_products_bget->get();
+                $search_products = [];
             }
+
+        } else {
+
+            $search_products = $search_products_bget->get();
+        }
+
+
+        //add search products by store with keyword
+        if (count($find_store_products) > 0) {
+            $search_products = array_merge($search_products, $find_store_products);
         }
 
         // Filter by Theme
-        $search_products = $search_products_bget->get();
-
         $search_theme_count = count($product_theme);
 
         if ($search_theme_count > 0) {
@@ -813,7 +833,6 @@ class HomeController extends Controller
             $search_products = $products;
         }
 
-
         $header = view('includes.header')->with('header_category', $header_category)->with('catg_list', $get_category_list)
             ->with('logodetails', $getlogodetails)->with('inverse_logodetails', $getlogo2details)->with('country_details', $country_details)
             ->with('theme_list', $get_theme_list);
@@ -821,6 +840,7 @@ class HomeController extends Controller
         $footer = view('includes.footer')->with('cms_page_title', $cms_page_title)
             ->with('get_social_media_url', $get_social_media_url)->with('get_contact_det', $get_contact_det)
             ->with('getanl', $getanl);
+
 
         return view('search')->with('theme_details', $get_theme_level_list)->with('catg_list', $get_category_list)->with('header', $header)->with('footer', $footer)
             ->with('header_category', $header_category)
@@ -1350,7 +1370,7 @@ class HomeController extends Controller
             $mem_newsget_check = Input::get('newsletter');
             if ($mem_newsget_check == "on") {
                 $mem_newsget = 1;
-                $subscribe_entry = array('name' => $mem_username, 'email' => $mem_email, 'status' => 1, 'from_member'=>1);
+                $subscribe_entry = array('name' => $mem_username, 'email' => $mem_email, 'status' => 1, 'from_member' => 1);
                 DB::table('nm_newsletter_subscribers')->insert($subscribe_entry);
             }
 
@@ -1750,7 +1770,7 @@ class HomeController extends Controller
 
 
         if (count($check_valid_email) > 0) {
-            $user_id  = $check_valid_email[0]->mem_userid;
+            $user_id = $check_valid_email[0]->mem_userid;
 
             $send_mail_data = array(
                 'username' => $check_valid_email[0]->mem_fname . ' ' . $check_valid_email[0]->mem_lname,
@@ -2380,6 +2400,29 @@ class HomeController extends Controller
             //theme select
             $theme_selection = Input::get('selected_theme');
 
+            $themeids = explode(',', $theme_selection);
+            $new_theme_ids = explode(',', $theme_selection);
+
+
+            foreach ($themeids as $theme_id) {
+
+                $theme = Theme::find($theme_id);
+
+                if ($theme) {
+
+                    $parent_theme_id = $theme->parent_theme;
+                    if ($parent_theme_id != 0) {
+                        //check whether parent theme exist
+                        if (!in_array($parent_theme_id, $new_theme_ids)) {
+                            array_push($new_theme_ids, $parent_theme_id);
+                        }
+                    }
+                }
+
+            }
+
+            $theme_selection = implode(',', $new_theme_ids);
+
             $select_theme = str_replace(',', ':', $theme_selection);
 
             $select_theme = rtrim($select_theme, ':');
@@ -2480,7 +2523,10 @@ class HomeController extends Controller
                 $move_name = explode('.', $filedown_name);
                 $fd_name = reset($move_name);
                 $fd_extension = end($move_name);
-                $filename_down = $fd_name . str_random(8) . "." . $fd_extension;
+
+                $fd_name = str_replace(array(' ', '?', '<', '>', '&', '{', '}', '*'), array('_'), $fd_name);
+
+                $filename_down = $fd_name . "." . $fd_extension;
                 $uploadSuccess2 = Input::file('file_down')->move($dest_dir, $filename_down);
             }
 
@@ -2493,7 +2539,14 @@ class HomeController extends Controller
                 return Redirect::to('add_my_resource')->withErrors('The Product Already exist in the Store');
             } else {
 
-                $curator_id = -1;
+                $merchant = Member::find($Select_Merchant);
+
+                $merchant_email = $merchant->mem_email;
+                $merchant_name = $merchant->mem_fname . ' ' . $merchant->mem_lname;
+                $merchant_self = $merchant->mer_self;
+
+                $pro_approved_status = ($merchant_self) ? Products::PRODUCT_STATUS_APPROVED : Products::PRODUCT_STATUS_PENDING;
+                $pro_checked_by = ($merchant_self) ? 0 : -1;
 
                 $entry = array(
                     'pro_title' => $Product_Title,
@@ -2516,45 +2569,40 @@ class HomeController extends Controller
                     'pro_image_count' => $img_count,
                     'pro_theme_ids' => $select_theme,
                     'pro_status' => Products::PRODUCT_STATUS_ACTIVATED,
-                    'pro_approved_status' => Products::PRODUCT_STATUS_PENDING,
-                    'pro_checked_by' => $curator_id,
+                    'pro_approved_status' => $pro_approved_status,
+                    'pro_checked_by' => $pro_checked_by,
                     'created_date' => $date
                 );
 
                 $productid = Products::insert_product($entry);
-                $productid = base64_encode($productid);
+                $encoded_productid = base64_encode($productid);
 
                 //send add product confirm
-                $merchant = Member::find($Select_Merchant);
-                if ($merchant) {
-                    $merchant_email = $merchant->mem_email;
-                    $merchant_name = $merchant->mem_fname . ' ' . $merchant->mem_lname;
-                    if ($_SERVER['HTTP_HOST'] != 'localhost') {
-                        //$Product_Title, $productid
-                        Mail::send('emails.merchant_product_upload', array('merchant_name' => $merchant_name, 'product_title' => $Product_Title, 'product_id' => $productid),
-                            function ($message) use ($merchant_email) {
-                                $message->to($merchant_email)->subject("Your resource has been submitted successfully");
-                            });
 
-                        $curators = Curator::get()->all();
+                if ($_SERVER['HTTP_HOST'] != 'localhost') {
+                    //$Product_Title, $productid
+                    Mail::send('emails.merchant_product_upload', array('merchant_name' => $merchant_name, 'product_title' => $Product_Title, 'product_id' => $encoded_productid),
+                        function ($message) use ($merchant_email) {
+                            $message->to($merchant_email)->subject("Your resource has been submitted successfully");
+                        });
 
-                        //add this product to curator's check list
-                        if ($curators) {
-                            foreach ($curators as $curator) {
-                                if ($curator && $curator->has_theme_in_charge($select_theme)) {
-                                    $curator_email = $curator->curator_email;
-                                    $curator_name = $curator->curator_name;
-                                    $curator_product_id = base64_encode($productid);
+                    $curators = Curator::get()->all();
 
-                                    Mail::send('emails.curator_product_upload_inform', array('curator_name' => $curator_name, 'merchant_name' => $merchant_name, 'product_title' => $Product_Title, 'product_id' => $curator_product_id),
-                                        function ($message) use ($curator_email) {
-                                            $message->to($curator_email)->subject("New content is ready for review at the Living Lectionary");
-                                        });
-                                }
+                    //add this product to curator's check list
+                    if ($curators && !$merchant_self) {
+                        foreach ($curators as $curator) {
+                            if ($curator && $curator->has_theme_in_charge($select_theme)) {
+                                $curator_email = $curator->curator_email;
+                                $curator_name = $curator->curator_name;
+
+                                Mail::send('emails.curator_product_upload_inform', array('curator_name' => $curator_name, 'merchant_name' => $merchant_name, 'product_title' => $Product_Title, 'product_id' => $encoded_productid),
+                                    function ($message) use ($curator_email) {
+                                        $message->to($curator_email)->subject("New content is ready for review at This We Affirm");
+                                    });
                             }
                         }
-
                     }
+
                 }
             }
 
@@ -2565,7 +2613,6 @@ class HomeController extends Controller
             return Redirect::to('/');
 
         }
-
     }
 
 
@@ -3636,10 +3683,10 @@ class HomeController extends Controller
 
         $from_member = 0;
         $member_exist = count(Member::where('mem_email', $subscribe_email)->get());
-        if($member_exist)
+        if ($member_exist)
             $from_member = 1;
-        $entry = array('name' => $subscribe_name, 'email' => $subscribe_email, 'status' => 1,'from_member'=>$from_member);
-        
+        $entry = array('name' => $subscribe_name, 'email' => $subscribe_email, 'status' => 1, 'from_member' => $from_member);
+
         DB::table('nm_newsletter_subscribers')->insert($entry);
 
         return response()->json(['result' => 'success']);

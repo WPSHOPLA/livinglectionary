@@ -2,24 +2,22 @@
 namespace App\Http\Controllers;
 
 use App\Curator;
+use App\Dashboard;
 use App\Home;
 use App\Http\Models;
 use App\Member;
+use App\Merchant;
 use App\Order;
 use App\OrderShip;
 use App\Products;
-use App\Merchant;
-use App\Dashboard;
 use App\Theme;
 use DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Validator;
-
 use Illuminate\Support\Facades\Response;
-
+use Illuminate\Support\Facades\Validator;
 use Session;
 
 class ProductController extends Controller
@@ -50,7 +48,6 @@ class ProductController extends Controller
     
     */
 
-    
 
     public function manage_pending_approved_product()
     {
@@ -163,6 +160,28 @@ class ProductController extends Controller
             //theme select
             $theme_selection = Input::get('selected_theme');
 
+            $themeids = explode(',', $theme_selection);
+            $new_theme_ids = explode(',', $theme_selection);
+
+
+            foreach ($themeids as $theme_id) {
+
+                $theme = Theme::find($theme_id);
+
+                if ($theme) {
+                    $parent_theme_id = $theme->parent_theme;
+
+                    if ($parent_theme_id != 0) {
+                        //check whether parent theme exist
+                        if (!in_array($parent_theme_id, $new_theme_ids)) {
+                            array_push($new_theme_ids, $parent_theme_id);
+                        }
+                    }
+                }
+            }
+
+            $theme_selection = implode(',', $new_theme_ids);
+
             $select_theme = str_replace(',', ':', $theme_selection);
 
             $select_theme = rtrim($select_theme, ':');
@@ -221,7 +240,7 @@ class ProductController extends Controller
                     $filedownname = $file_down->getClientOriginalName();
                     $ext = pathinfo($filedownname, PATHINFO_EXTENSION);
 
-                    $filename_down = $filedownname;
+                    $filename_down = str_replace(array(' ', '?', '<', '>', '&', '{', '}', '*'), array('_'), $filedownname);
                     $uploadSuccess2 = Input::file('file_down')->move($dest_dir, $filename_down);
                 }
             } else if ($product_content == 3) {
@@ -278,6 +297,14 @@ class ProductController extends Controller
 //                    $curator_id = -1;
 //                }
 
+                $merchant = Member::find($Select_Merchant);
+                $merchant_email = $merchant->mem_email;
+                $merchant_name = $merchant->mem_fname . ' ' . $merchant->mem_lname;
+
+                $merchant_self = $merchant->mer_self;
+                $pro_approved_status = ($merchant_self) ? Products::PRODUCT_STATUS_APPROVED : Products::PRODUCT_STATUS_PENDING;
+                $pro_checked_by = ($merchant_self) ? 0 : -1;
+
                 $entry = array(
 
 
@@ -317,9 +344,9 @@ class ProductController extends Controller
 
                     'pro_theme_ids' => $select_theme,
 
-                    'pro_checked_by' => -1,
+                    'pro_checked_by' => $pro_checked_by,
 
-                    'pro_approved_status' => Products::PRODUCT_STATUS_PENDING,
+                    'pro_approved_status' => $pro_approved_status,
 
                     'pro_status' => Products::PRODUCT_STATUS_ACTIVATED,
 
@@ -329,9 +356,6 @@ class ProductController extends Controller
 
                 $productid = Products::insert_product($entry);
 
-                $merchant = Member::find($Select_Merchant);
-                $merchant_email = $merchant->mem_email;
-                $merchant_name = $merchant->mem_fname . ' ' . $merchant->mem_lname;
 
                 //if curator exist, send info to curator
 
@@ -347,14 +371,15 @@ class ProductController extends Controller
                     //send mail to curator
                     if ($curators) {
                         foreach ($curators as $curator) {
-                            if ($curator && $curator->has_theme_in_charge($select_theme))
+                            if ($curator && $curator->has_theme_in_charge($select_theme)) {
                                 $curator_email = $curator->curator_email;
-                            $curator_name = $curator->curator_name;
-                            $curator_product_id = base64_encode($productid);
-                            Mail::send('emails.curator_product_upload_inform', array('curator_name' => $curator_name, 'merchant_name' => $merchant_name, 'product_title' => $Product_Title, 'product_id' => $curator_product_id),
-                                function ($message) use ($curator_email) {
-                                    $message->to($curator_email)->subject("New content is ready for review at the Living Lectionary");
-                                });
+                                $curator_name = $curator->curator_name;
+                                $curator_product_id = base64_encode($productid);
+                                Mail::send('emails.curator_product_upload_inform', array('curator_name' => $curator_name, 'merchant_name' => $merchant_name, 'product_title' => $Product_Title, 'product_id' => $curator_product_id),
+                                    function ($message) use ($curator_email) {
+                                        $message->to($curator_email)->subject("New content is ready for review at This We Affirm");
+                                    });
+                            }
                         }
                     }
                 }
@@ -428,6 +453,28 @@ class ProductController extends Controller
 
             //theme select
             $theme_selection = Input::get('selected_theme');
+
+            $themeids = explode(',', $theme_selection);
+            $new_theme_ids = explode(',', $theme_selection);
+
+            foreach ($themeids as $theme_id) {
+
+                $theme = Theme::find($theme_id);
+
+                if ($theme) {
+
+                    $parent_theme_id = $theme->parent_theme;
+                    if ($parent_theme_id != 0) {
+                        //check whether parent theme exist
+                        if (!in_array($parent_theme_id, $new_theme_ids)) {
+                            array_push($new_theme_ids, $parent_theme_id);
+                        }
+                    }
+                }
+
+            }
+
+            $theme_selection = implode(',', $new_theme_ids);
 
             $select_theme = str_replace(',', ':', $theme_selection);
 
@@ -575,7 +622,8 @@ class ProductController extends Controller
 
                     $filedownname = $file_down->getClientOriginalName();
                     $ext = pathinfo($filedownname, PATHINFO_EXTENSION);
-                    $filename_down = $filedownname;
+
+                    $filename_down = str_replace(array(' ', '?', '<', '>', '&', '{', '}', '*'), array('_'), $filedownname);
                     $uploadSuccess2 = Input::file('file_down')->move($dest_dir, $filename_down);
                 }
             }
@@ -644,6 +692,7 @@ class ProductController extends Controller
             return Redirect::to('siteadmin');
 
         }
+
 
     }
 
@@ -774,7 +823,7 @@ class ProductController extends Controller
             $from_date = Input::get('from_date');
             $to_date = Input::get('to_date');
 
-            if($from_date || $to_date)
+            if ($from_date || $to_date)
                 $sold_products = Dashboard::get_sold_products_by_period($from_date, $to_date);
             else
                 $sold_products = Dashboard::get_sold_products();
@@ -800,7 +849,7 @@ class ProductController extends Controller
             $from_date = Input::get('from_date');
             $to_date = Input::get('to_date');
 
-            if($from_date || $to_date)
+            if ($from_date || $to_date)
                 $sold_products = Dashboard::get_sold_shipping_products_by_period($from_date, $to_date);
             else
                 $sold_products = Dashboard::get_sold_shipping_products();
@@ -928,6 +977,30 @@ class ProductController extends Controller
             //theme select
             $theme_selection = Input::get('selected_theme');
 
+
+            $themeids = explode(',', $theme_selection);
+            $new_theme_ids = explode(',', $theme_selection);
+
+
+            foreach ($themeids as $theme_id) {
+
+                $theme = Theme::find($theme_id);
+
+                if ($theme) {
+
+                    $parent_theme_id = $theme->parent_theme;
+                    if ($parent_theme_id != 0) {
+                        //check whether parent theme exist
+                        if (!in_array($parent_theme_id, $new_theme_ids)) {
+                            array_push($new_theme_ids, $parent_theme_id);
+                        }
+                    }
+                }
+
+            }
+
+            $theme_selection = implode(',', $new_theme_ids);
+
             $select_theme = str_replace(',', ':', $theme_selection);
 
             $select_theme = rtrim($select_theme, ':');
@@ -983,7 +1056,7 @@ class ProductController extends Controller
                     $filedownname = $file_down->getClientOriginalName();
                     $ext = pathinfo($filedownname, PATHINFO_EXTENSION);
 
-                    $filename_down = $filedownname;
+                    $filename_down = str_replace(array(' ', '?', '<', '>', '&', '{', '}', '*'), array('_'), $filedownname);
                     $uploadSuccess2 = Input::file('file_down')->move($dest_dir, $filename_down);
                 }
             } else if ($product_content == 3) {
@@ -1031,7 +1104,8 @@ class ProductController extends Controller
                 }
 
 
-                $curator = Curator::where('curator_theme', $select_theme)->get()->first();
+                $curators = Curator::get()->all();
+
 //                if ($curator) {
 //                    $curator_id = $curator->id;
 //                } else {
@@ -1039,6 +1113,15 @@ class ProductController extends Controller
 //                    //then add to this to admin
 //                    $curator_id = -1;
 //                }
+
+                $merchant = Member::find($merchant_id);
+                $merchant_email = $merchant->mem_email;
+                $merchant_name = $merchant->mem_fname . ' ' . $merchant->mem_lname;
+
+                $merchant_self = $merchant->mer_self;
+
+                $pro_approved_status = ($merchant_self) ? Products::PRODUCT_STATUS_APPROVED : Products::PRODUCT_STATUS_PENDING;
+                $pro_checked_by = ($merchant_self) ? 0 : -1;
 
                 $entry = array(
 
@@ -1078,9 +1161,9 @@ class ProductController extends Controller
 
                     'pro_theme_ids' => $select_theme,
 
-                    'pro_checked_by' => -1,
+                    'pro_checked_by' => $pro_checked_by,
 
-                    'pro_approved_status' => Products::PRODUCT_STATUS_PENDING,
+                    'pro_approved_status' => $pro_approved_status,
 
                     'pro_status' => Products::PRODUCT_STATUS_ACTIVATED,
 
@@ -1090,9 +1173,6 @@ class ProductController extends Controller
 
                 $productid = Products::insert_product($entry);
 
-                $merchant = Member::find($merchant_id);
-                $merchant_email = $merchant->mem_email;
-                $merchant_name = $merchant->mem_fname . ' ' . $merchant->mem_lname;
 
                 //if curator exist, send info to curator
 
@@ -1105,18 +1185,22 @@ class ProductController extends Controller
                         });
 
                     //send mail to curator
-                    if ($curator) {
-                        $curator_email = $curator->curator_email;
-                        $curator_name = $curator->curator_name;
-                        $curator_product_id = base64_encode($productid);
-
-                        Mail::send('emails.curator_product_upload_inform', array('curator_name' => $curator_name, 'merchant_name' => $merchant_name, 'product_title' => $Product_Title, 'product_id' => $curator_product_id),
-                            function ($message) use ($curator_email) {
-                                $message->to($curator_email)->subject("New content is ready for review at the Living Lectionary");
-                            });
+                    if ($curators && !$merchant_self) {
+                        foreach ($curators as $curator) {
+                            if ($curator && $curator->has_theme_in_charge($select_theme)) {
+                                $curator_email = $curator->curator_email;
+                                $curator_name = $curator->curator_name;
+                                $curator_product_id = base64_encode($productid);
+                                Mail::send('emails.curator_product_upload_inform', array('curator_name' => $curator_name, 'merchant_name' => $merchant_name, 'product_title' => $Product_Title, 'product_id' => $curator_product_id),
+                                    function ($message) use ($curator_email) {
+                                        $message->to($curator_email)->subject("New content is ready for review at This We Affirm");
+                                    });
+                            }
+                        }
                     }
                 }
             }
+
             return Redirect::to('mer_manage_pending_approved_product')->with('message', 'New Product Uploaded');
 
         } else {
@@ -1180,6 +1264,30 @@ class ProductController extends Controller
 
             //theme select
             $theme_selection = Input::get('selected_theme');
+
+
+            $themeids = explode(',', $theme_selection);
+            $new_theme_ids = explode(',', $theme_selection);
+
+
+            foreach ($themeids as $theme_id) {
+
+                $theme = Theme::find($theme_id);
+
+                if ($theme) {
+
+                    $parent_theme_id = $theme->parent_theme;
+                    if ($parent_theme_id != 0) {
+                        //check whether parent theme exist
+                        if (!in_array($parent_theme_id, $new_theme_ids)) {
+                            array_push($new_theme_ids, $parent_theme_id);
+                        }
+                    }
+                }
+
+            }
+
+            $theme_selection = implode(',', $new_theme_ids);
 
             $select_theme = str_replace(',', ':', $theme_selection);
 
@@ -1324,7 +1432,7 @@ class ProductController extends Controller
                     $filedownname = $file_down->getClientOriginalName();
                     $ext = pathinfo($filedownname, PATHINFO_EXTENSION);
 
-                    $filename_down = $filedownname;
+                    $filename_down = str_replace(array(' ', '?', '<', '>', '&', '{', '}', '*'), array('_'), $filedownname);
                     $uploadSuccess2 = Input::file('file_down')->move($dest_dir, $filename_down);
                 }
             }
@@ -1508,7 +1616,7 @@ class ProductController extends Controller
             $from_date = Input::get('from_date');
             $to_date = Input::get('to_date');
 
-            if($from_date || $to_date)
+            if ($from_date || $to_date)
                 $sold_products = Merchant::get_mer_sold_products_by_period($merchant_id, $from_date, $to_date);
             else
                 $sold_products = Merchant::get_mer_sold_resources($merchant_id);
@@ -1537,7 +1645,7 @@ class ProductController extends Controller
             $from_date = Input::get('from_date');
             $to_date = Input::get('to_date');
 
-            if($from_date || $to_date)
+            if ($from_date || $to_date)
                 $sold_products = Merchant::get_mer_sold_products_by_period($merid, $from_date, $to_date);
             else
                 $sold_products = Merchant::get_mer_sold_resources($merid);
@@ -1555,9 +1663,8 @@ class ProductController extends Controller
     public function report_as_delivered($sold_product_id)
     {
         $sold_product = OrderShip::find($sold_product_id);
-        if($sold_product)
-        {
-            $sold_product->update(array('ship_status'=>OrderShip::ORDERSHIP_STATUS_DELIVERED));
+        if ($sold_product) {
+            $sold_product->update(array('ship_status' => OrderShip::ORDERSHIP_STATUS_DELIVERED));
 
             //check order's status
             $order_id = $sold_product->order_id;
