@@ -54,7 +54,7 @@ a.link {
 }
 
 .price_txt {
-    color: #00b381;
+    color: #0f0427;
     font-weight: bold;
 }
 
@@ -114,6 +114,15 @@ a.link {
 
 .multiselect-container li.subtheme {
     padding-left: 30px;
+}
+
+.multiselect-container li.subtheme a {
+    white-space: normal;
+}
+
+.multiselect-container li.subtheme label {
+    word-wrap: break-word;
+
 }
 
 .gllpMap {
@@ -428,8 +437,9 @@ input[type=number]::-webkit-outer-spin-button {
 }
 
 #legalNotice a {
-    color: #0A246A;
-    text-decoration: underline;
+    color: #3e0606;
+    text-decoration: none;
+    font-weight: 600;
 }
 
 #compairTbl td, #jquery-lightbox, #lightbox-loading {
@@ -1574,7 +1584,7 @@ input[type=submit].btn.btn-large {
 }
 
 div#siteheader + div.container {
-    margin-top: 130px;
+    margin-top: 150px;
     padding-top: 10px;
 }
 
@@ -2076,6 +2086,10 @@ ul.alert {
 }
 
 @media (max-width: 1200px) {
+
+    #drop-down-div {
+        left: -100px;
+    }
 
     #siteheader {
         padding: 0 2%;
@@ -2617,7 +2631,7 @@ ul.alert {
         overflow: hidden;
     }
 
-    img.mobile_logo{
+    img.mobile_logo {
         max-width: 90px;
     }
 
@@ -2740,7 +2754,7 @@ ul.alert {
     .jplist-grid-view .list-item {
         height: 300px;
         overflow: hidden;
-        width: 138px !important;
+        width: 100%;
         font-size: .6em
     }
 
@@ -2830,19 +2844,11 @@ ul.alert {
     color: black;
 }
 
-.login_modal {
-    height: 270px;
-}
 
 .show_mob {
     display: none;
 }
 
-@media (max-width: 780px) {
-    .login_modal {
-        height: 290px;
-    }
-}
 
 @media (max-width: 768px) {
     .show_mob {
@@ -2862,14 +2868,8 @@ ul.alert {
         margin: 10px auto;
     }
 
-    .mob-text-center{
+    .mob-text-center {
         text-align: center;
-    }
-}
-
-@media (max-width: 380px) {
-    .login_modal {
-        height: 320px;
     }
 }
 
@@ -2894,9 +2894,284 @@ ul.alert {
     margin: 20px auto;
 }
 
-.scripture_tip{
+.scripture_tip {
     font-weight: bolder;
     font-size: 16px;
     margin-bottom: 10px;
 }
 
+.welcome_subscribe {
+    height: 50vh;
+    background-image: url(../../public/assets/images/bannerimage/Living-Lectionary-Banner.jpg);
+    background-position: top;
+    background-size: cover;
+}
+
+.welcome_subscribe h1 {
+    position: absolute;
+    top: 50px;
+    left: 50px;
+    font-size: 50px;
+    color: white;
+}
+
+.special_thanks_div {
+    background: #ccc;
+    color: white;
+    text-align: center;
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+.special_thanks_div .title {
+    font-size: 30px;
+    line-height: 1.2;
+}
+
+.special_thanks_div .discount {
+    margin-top: 50px;
+    margin-bottom: 50px;
+    border-top: 2px solid #0f0427;
+    border-bottom: 2px solid #0f0427;
+}
+
+.special_thanks_div .discount p {
+    font-size: 8em;
+    line-height: 1.2;
+}
+
+.fullheight > div {
+    min-height: 80vh;
+}
+
+#sub_advantage {
+    text-align: center;
+    width: 80%;
+    font-size: 18px;
+    line-height: 25px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 25px;
+}
+
+.sub_button_div {
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 20px;
+    color: #fff;
+    text-transform: uppercase;
+    line-height: 1.4;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+}
+
+#legalNotice .sub_button_div a {
+    text-decoration: none;
+}
+
+.options {
+    border: 1px #333 solid;
+    padding: 2% 5% 3% 5%;
+    min-height: 400px;
+    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.margtop5 {
+    margin-top: 5%;
+}
+
+.options h4 {
+    min-height: 120px;
+}
+
+.coupon_code_div {
+    border: 1px solid #0f0427;
+    overflow: auto;
+    box-shadow: 2px 2px rgba(0, 0, 0, 0.37);
+    padding: 10px 20px;
+}
+
+#coupon_apply_success {
+    color: #0A246A;
+    font-weight: bold;
+    display: none;
+}
+
+#coupon_apply_fail {
+    color: red;
+    font-weight: bold;
+    display: none;
+}
+
+#coupon_code {
+    vertical-align: inherit;
+}
+
+#user_drop_down ul.dropdown-menu li a i:before {
+    width: 20px;
+    margin-right: 20px;
+}
+
+.tt-menu {
+    background: white;
+    padding: 10px;
+}
+
+#subscribe_bt {
+    font-size: 25px;
+    padding: 20px 30px;
+    background-color: #0f0427;
+}
+
+#subscribe_btt {
+    background-color: #0f0427;
+    font-size: 25px;
+    word-break: break-all;
+    display: block;
+    white-space: normal;
+    line-height: 1.2;
+}
+
+.subscribe_btt {
+    background-color: #0f0427;
+    font-size: 20px;
+    word-break: break-all;
+    white-space: normal;
+    line-height: 1.2;
+    padding: 20px;
+    margin: auto;
+}
+
+#paypal_pay_iframe {
+    width: 100%;
+    height: 100vh;
+    box-shadow: 3px 3px 6px #0f0427;
+}
+
+#banner_subscribe_bt {
+    background: rgba(157, 151, 109, 0.21);
+    padding: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.9);
+    float: left;
+    margin-top: 20px;
+    font-size: 30px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-family: 'Lato', sans-serif;
+}
+
+@media (max-width: 1078px) {
+    .options {
+        margin-top: 50px;
+        min-width: 300px;
+    }
+}
+
+@media (max-width: 780px) {
+    .special_thanks_div {
+        margin: 50px 20px;
+    }
+
+    .special_thanks_div .discount p {
+        font-size: 6em;
+    }
+
+    .welcome_subscribe h1 {
+        font-size: 40px;
+        left: 30px;
+    }
+
+    #banner_subscribe_bt {
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    #banner_subscribe_bt {
+        display: none;
+    }
+}
+
+.paypal_card_img_container img {
+    max-height: 50px;
+}
+
+.sub_title {
+    border-bottom: 1px solid #1f1f1f;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 5px;
+    margin-bottom: 20px;
+}
+
+.sub_title .text-sub {
+    color: red;
+}
+
+/* Custom CSS */
+
+.contentBox {
+    margin-top: 20px;
+    width: 30%;
+    margin-left: 3%;
+    border-top: 2px solid #333;
+    float: left;
+    padding-top: 1px;
+}
+
+@media (max-width: 780px) {
+
+    .contentBox {
+        margin-top: 20px;
+        width: 80%;
+        margin-left: 10%;
+        border-top: 2px solid #333;
+        float: none;
+        padding-top: 1px;
+    }
+
+    #subscribe_bt {
+        font-size: 20px;
+    }
+}
+
+.inline_label {
+    display: inline-block;
+}
+
+.inline_label input {
+    max-width: 50px;
+}
+
+.multiselect-container {
+    max-height: 500px;
+    overflow: auto;
+}
+
+.search_product_one {
+    width: 100%;
+    background: white;
+    padding: 10px;
+}
+
+
+.login_modal {
+    height: auto;
+    bottom: auto;
+}
+
+#grids .tab-content{
+    overflow: inherit;
+}
+
+input[type=radio].form-control{
+    height: auto;
+}
+
+.active_box{
+    display: block !important;
+}
