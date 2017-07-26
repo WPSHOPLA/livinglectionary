@@ -532,7 +532,7 @@
             var count_id = document.getElementById("count").value;
 
             if (id == 1 && (!$('#file0').val())) {
-                return;
+                //return;
             } else {
                 var last_file = jQuery('#divTxt').find('input[type="file"]').last();
                 if (id != 1) {
@@ -562,7 +562,9 @@
 
 
         function isNumberKey(evt) {
-            var charCode = (evt.which) ? evt.which : event.keyCode
+
+            var charCode = (evt.which) ? evt.which : event.keyCode;
+
             if (charCode > 31 && (charCode < 48 || charCode > 57))
                 return false;
 
