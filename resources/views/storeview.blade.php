@@ -160,10 +160,17 @@
         <h4 class="text-center">Content from <?php echo ucwords($store->stor_name);  ?></h4>
         <legend></legend>
         <div class="row-fluid">
-            <?php if($get_store_product_by_id) { ?>
+
+            <?php if($get_store_product_by_id) {
+            $i = 0;
+            ?>
             <?php foreach($get_store_product_by_id as $fetch_most_visit_pro) {
             $mostproduct_img = explode('/**/', $fetch_most_visit_pro->pro_Img);
             $res = base64_encode($fetch_most_visit_pro->pro_id);
+
+            if ($i == 0) {
+                echo "<div class='row'>";
+            }
             ?>
 
             <div class="col-md-3 col-sm-6 col-xs-12">
@@ -189,7 +196,18 @@
                 </div>
             </div>
 
-            <?php } } else { ?>
+            <?php
+            if ($i == 3) {
+                echo "</div>";
+            }
+            $i++;
+            if ($i == 4) {
+                $i = 0;
+            }
+
+            }
+
+            } else { ?>
             <h5 style="color:#933;">No records found under <?php echo ucwords($store->stor_name);  ?> products.</h5>
             <?php } ?>
         </div>
